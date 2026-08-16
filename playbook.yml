@@ -1,0 +1,73 @@
+---
+- name: Automação e Provisionamento do Ambiente Projeto Korp
+  hosts: servidor_korp
+  become: yes # Executa tudo como root para poder instalar os pacotes
+  vars:
+    project_dir: /opt/desafio-korp
+
+  tasks:
+    - name: 1. Instalar dependencias do sistema
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+        update_cache: yes
+
+    - name: 2. Adicionar chave GPG oficial do Docker
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: 3. Adicionar repositorio oficial do Docker
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+        state: present
+
+    - name: 4. Instalar Docker e o plugin Docker Compose no Linux
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+
+    - name: 5. Garantir que o servico do Docker esta rodando
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: 6. Criar diretorio do projeto na VM
+      file:
+        path: "{{ project_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: 7. Copiar todos os arquivos do projeto para a VM
+      copy:
+        src: ./
+        dest: "{{ project_dir }}/"
+
+    - name: 8. Criar Rede, Fazer Build da Imagem, Configurar NGINX/Monitoramento e Subir Containers
+      command: docker compose up -d --build --force-recreate
+      args:
+        chdir: "{{ project_dir }}"
+
+    - name: 9. Aguardar 10 segundos para a API iniciar corretamente
+      pause:
+        seconds: 10
+
+    - name: 10. Validar o funcionamento do servico com requisição HTTP
+      uri:
+        url: http://localhost:8088/projeto-korp
+        return_content: yes
+      register: api_response
+
+    - name: 11. Exibir a resposta do Projeto Korp no console do Ansible
+      debug:
+        msg: "A API respondeu com sucesso! Payload: {{ api_response.json }}"

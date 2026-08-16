@@ -1,0 +1,50 @@
+{
+  "title": "Volume de Requisições",
+  "uid": "projeto-korp-dash",
+  "schemaVersion": 38,
+  "timezone": "browser",
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Volume de Requisições",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "uid": "Prometheus", "type": "prometheus" },
+      "targets": [
+        {
+          "expr": "http_requests_total",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Status da API",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "uid": "Prometheus", "type": "prometheus" },
+      "targets": [
+        {
+          "expr": "service_availability",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
